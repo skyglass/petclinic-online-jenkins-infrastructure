@@ -1,104 +1,14 @@
 module "jenkins" {
   source = "./module-jenkins"
 
-  aws_region                 = var.aws_region
-  key_name                   = "skyglass-key"
+  region                 = var.aws_region
+  author                 = "skyglass"
+  public_key             = "../ssh-jenkins.pub"
+  hosted_zone_id         = "Z00391621ABLUKSLON5HM"
+  domain_name            = "greeta.net"
+  ssl_arn                = "arn:aws:acm:eu-central-1:217264062492:certificate/e989836a-4a9a-4c87-bd05-6749fecb7958"
+  jenkins_username       = "admin"
+  jenkins_password       = "admin"
+  jenkins_credentials_id = "jenkins-ssh"
+
 }
-
-module "kubernetes-cluster" {
-  source = "./module-eks-cluster"
-
-  aws_region                 = var.aws_region
-  business_division          = var.business_division
-  environment                = var.environment
-  cluster_name               = var.cluster_name
-  nodegroup_disk_size        = "20"
-  nodegroup_instance_types   = ["t3.medium"]
-  nodegroup_desired_size     = 1
-  nodegroup_min_size         = 1
-  nodegroup_max_size         = 5
-}
-
-
-
-module "ebs-csi" {
-  source                                           = "./module-ebs-csi"
-
-  aws_region                                       = var.aws_region
-  business_division                                = var.business_division
-  environment                                      = var.environment  
-  cluster_id                                       = module.kubernetes-cluster.cluster_id
-  cluster_endpoint                                 = module.kubernetes-cluster.cluster_endpoint
-  cluster_certificate_authority_data               = module.kubernetes-cluster.cluster_certificate_authority_data
-  cluster_token                                    = module.kubernetes-cluster.cluster_token
-  aws_iam_openid_connect_provider_arn              = module.kubernetes-cluster.aws_iam_openid_connect_provider_arn
-  aws_iam_openid_connect_provider_extract_from_arn = module.kubernetes-cluster.aws_iam_openid_connect_provider_extract_from_arn
-  node_group_public_id                             = module.kubernetes-cluster.node_group_public_id
-  ebs_csi_depends_on                               = [module.kubernetes-cluster.node_group_public_id]
-}
-
-module "load-balancer" {
-  source                                           = "./module-load-balancer"
-
-  aws_region                                       = var.aws_region
-  business_division                                = var.business_division
-  environment                                      = var.environment
-  vpc_id                                           = module.kubernetes-cluster.vpc_id
-  cluster_id                                       = module.kubernetes-cluster.cluster_id
-  cluster_endpoint                                 = module.kubernetes-cluster.cluster_endpoint
-  cluster_certificate_authority_data               = module.kubernetes-cluster.cluster_certificate_authority_data
-  cluster_token                                    = module.kubernetes-cluster.cluster_token
-  aws_iam_openid_connect_provider_arn              = module.kubernetes-cluster.aws_iam_openid_connect_provider_arn
-  aws_iam_openid_connect_provider_extract_from_arn = module.kubernetes-cluster.aws_iam_openid_connect_provider_extract_from_arn
-  node_group_public_id                             = module.kubernetes-cluster.node_group_public_id
-  ebs_csi_iam_role_arn                             = module.ebs-csi.ebs_csi_iam_role_arn
-  ebs_csi_driver_id                                = module.ebs-csi.ebs_csi_driver_id
-  lbc_depends_on                                   = [module.kubernetes-cluster.node_group_public_id, module.ebs-csi.ebs_csi_driver_id]
-}
-
-module "sample-app" {
-  source                                           = "./module-sample-app"
-
-  aws_region                                       = var.aws_region
-  business_division                                = var.business_division
-  environment                                      = var.environment
-  vpc_id                                           = module.kubernetes-cluster.vpc_id
-  cluster_id                                       = module.kubernetes-cluster.cluster_id
-  cluster_endpoint                                 = module.kubernetes-cluster.cluster_endpoint
-  cluster_certificate_authority_data               = module.kubernetes-cluster.cluster_certificate_authority_data
-  cluster_token                                    = module.kubernetes-cluster.cluster_token
-  aws_iam_openid_connect_provider_arn              = module.kubernetes-cluster.aws_iam_openid_connect_provider_arn
-  aws_iam_openid_connect_provider_extract_from_arn = module.kubernetes-cluster.aws_iam_openid_connect_provider_extract_from_arn
-  node_group_public_id                             = module.kubernetes-cluster.node_group_public_id
-  ebs_csi_iam_role_arn                             = module.ebs-csi.ebs_csi_iam_role_arn
-  ebs_csi_driver_id                                = module.ebs-csi.ebs_csi_driver_id
-  externaldns_iam_role_arn                         = module.load-balancer.externaldns_iam_role_arn
-  lbc_controller_id                                = module.load-balancer.lbc_controller_id
-  sample_app_depends_on                            = [module.kubernetes-cluster.node_group_public_id, 
-                                                      module.ebs-csi.ebs_csi_driver_id, 
-                                                      module.ebs-csi.ebs_csi_iam_role_arn,
-                                                      module.ebs-csi.ebs_csi_iam_role_policy_attach,
-                                                      module.ebs-csi.ebs_csi_iam_policy_arn,         
-                                                      module.load-balancer.lbc_controller_id,
-                                                      module.load-balancer.lbc_iam_role_arn,
-                                                      module.load-balancer.lbc_iam_role_arn,
-                                                      module.load-balancer.lbc_iam_policy_arn, 
-                                                      module.load-balancer.lbc_iam_role_policy_attach,                                                                                                                
-                                                      module.load-balancer.externaldns_iam_policy_arn,
-                                                      module.load-balancer.externaldns_iam_role_arn,
-                                                      module.load-balancer.externaldns_id,
-                                                      module.load-balancer.externaldns_iam_role_policy_attach
-                                                     ]
-}
-
-#module "traefik" {
-#  source = "./module-aws-traefik"
-#
-#  aws_region                   = local.aws_region
-#  kubernetes_cluster_id        = data.aws_eks_cluster.petclinic-online.id
-#  kubernetes_cluster_name      = module.aws-kubernetes-cluster.eks_cluster_name
-#  kubernetes_cluster_cert_data = module.aws-kubernetes-cluster.eks_cluster_certificate_data
-#  kubernetes_cluster_endpoint  = module.aws-kubernetes-cluster.eks_cluster_endpoint
-#
-#  eks_nodegroup_id = module.aws-kubernetes-cluster.eks_cluster_nodegroup_id
-#}
