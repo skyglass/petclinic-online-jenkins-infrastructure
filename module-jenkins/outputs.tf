@@ -9,3 +9,19 @@ output "jenkins-master-elb" {
 output "jenkins-dns" {
   value = "https://${aws_route53_record.jenkins_master.name}"
 }
+
+output "bastion_sg_id" {
+  value = aws_security_group.bastion_host.id
+}
+
+output "jenkins_sg_id" {
+  value = aws_security_group.jenkins_master_sg.id
+}
+
+output "key_pair_management_id" {
+  value = aws_key_pair.management.id
+}
+
+output "jenkins_vpc_id" {
+  value = aws_vpc.management.id
+}

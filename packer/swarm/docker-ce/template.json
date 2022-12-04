@@ -3,8 +3,7 @@
         "region" : "eu-central-1",
         "aws_profile": "skyglass",
         "source_ami" : "ami-076309742d466ad69",
-        "instance_type": "t2.medium",
-        "ssh_key": "../../../ssh-jenkins"
+        "instance_type": "t2.medium"
     },
     "builders" : [
         {
@@ -14,8 +13,8 @@
             "instance_type" : "{{user `instance_type`}}",
             "source_ami" : "{{user `source_ami`}}",
             "ssh_username" : "ec2-user",
-            "ami_name" : "jenkins-worker1",
-            "ami_description" : "Jenkins worker's AMI",
+            "ami_name" : "docker-18.09.9-ce",
+            "ami_description" : "Docker engine AMI",
             "run_tags" : {
                 "Name" : "packer-builder"
             }

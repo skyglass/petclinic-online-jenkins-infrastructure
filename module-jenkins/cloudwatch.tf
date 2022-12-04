@@ -5,9 +5,9 @@ resource "aws_cloudwatch_metric_alarm" "high-cpu-jenkins-workers-alarm" {
   evaluation_periods  = "2"
   metric_name         = "CPUUtilization"
   namespace           = "AWS/EC2"
-  period              = "120"
+  period              = "60"
   statistic           = "Average"
-  threshold           = "80"
+  threshold           = "40"
 
   dimensions = {
     AutoScalingGroupName = aws_autoscaling_group.jenkins_workers.name
@@ -21,7 +21,7 @@ resource "aws_autoscaling_policy" "scale-out" {
   name                   = "scale-out-jenkins-workers"
   scaling_adjustment     = 1
   adjustment_type        = "ChangeInCapacity"
-  cooldown               = 300
+  cooldown               = 150
   autoscaling_group_name = aws_autoscaling_group.jenkins_workers.name
 }
 
@@ -32,7 +32,7 @@ resource "aws_cloudwatch_metric_alarm" "low-cpu-jenkins-workers-alarm" {
   evaluation_periods  = "2"
   metric_name         = "CPUUtilization"
   namespace           = "AWS/EC2"
-  period              = "120"
+  period              = "60"
   statistic           = "Average"
   threshold           = "20"
 
@@ -48,6 +48,6 @@ resource "aws_autoscaling_policy" "scale-in" {
   name                   = "scale-in-jenkins-workers"
   scaling_adjustment     = -1
   adjustment_type        = "ChangeInCapacity"
-  cooldown               = 300
+  cooldown               = 150
   autoscaling_group_name = aws_autoscaling_group.jenkins_workers.name
 }
