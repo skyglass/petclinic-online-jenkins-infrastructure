@@ -25,3 +25,7 @@ output "key_pair_management_id" {
 output "jenkins_vpc_id" {
   value = aws_vpc.management.id
 }
+
+output "jenkins_public_subnets" {
+  value = [for subnet in aws_subnet.public_subnets : subnet.id]
+}
